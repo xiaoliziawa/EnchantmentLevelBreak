@@ -4,11 +4,9 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AnvilMenu;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.DataSlot;
-import net.minecraft.world.inventory.ItemCombinerMenu;
+import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -25,8 +23,16 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
     @Shadow public int repairItemCountCost;
     @Shadow private final DataSlot cost = DataSlot.standalone();
 
-    protected AnvilMenuMixin(int containerId, ContainerLevelAccess access) {
-        super(null, containerId, null, access);
+    protected AnvilMenuMixin(int containerId, Inventory inventory, ContainerLevelAccess access) {
+        super(MenuType.ANVIL, containerId, inventory, access, createInputSlotDefinitions());
+    }
+
+    private static ItemCombinerMenuSlotDefinition createInputSlotDefinitions() {
+        return ItemCombinerMenuSlotDefinition.create()
+            .withSlot(0, 27, 47, (stack) -> true)
+            .withSlot(1, 76, 47, (stack) -> true)
+            .withResultSlot(2, 134, 47)
+            .build();
     }
 
     @Unique

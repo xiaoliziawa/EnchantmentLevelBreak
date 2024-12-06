@@ -21,8 +21,7 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 public class CEnchantCommand {
 
     private static final SuggestionProvider<CommandSourceStack> SUGGEST_ENCHANTMENTS = (context, builder) ->
-            SharedSuggestionProvider.suggestResource(context.getSource().registryAccess().registryOrThrow(Registries.ENCHANTMENT).keySet(), builder);
-
+            SharedSuggestionProvider.suggestResource(context.getSource().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).keySet(), builder);
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cenchant")
                 .requires(source -> source.hasPermission(2))
@@ -62,9 +61,8 @@ public class CEnchantCommand {
             enchantmentId = ResourceLocation.parse(enchantmentName);
         }
 
-        Holder<Enchantment> enchantment = source.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolder(enchantmentId)
+        Holder<Enchantment> enchantment = source.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(enchantmentId)
                 .orElse(null);
-
         if (enchantment == null) {
             source.sendFailure(Component.literal("Invalid enchantment: " + enchantmentName));
             return 0;
