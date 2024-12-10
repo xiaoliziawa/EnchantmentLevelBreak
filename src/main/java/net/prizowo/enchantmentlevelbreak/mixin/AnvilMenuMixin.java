@@ -25,7 +25,7 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
     @Shadow private final DataSlot cost = DataSlot.standalone();
 
     @Unique
-    private static ItemCombinerMenuSlotDefinition createInputSlotDefinitions() {
+    private static ItemCombinerMenuSlotDefinition enchantmentLevelBreak$createInputSlotDefinitions() {
         return ItemCombinerMenuSlotDefinition.create()
                 .withSlot(0, 27, 47, (stack) -> true)
                 .withSlot(1, 76, 47, (stack) -> true)
@@ -34,7 +34,7 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
     }
 
     protected AnvilMenuMixin(int containerId, Inventory playerInventory, ContainerLevelAccess access) {
-        super(MenuType.ANVIL, containerId, playerInventory, access, createInputSlotDefinitions());
+        super(MenuType.ANVIL, containerId, playerInventory, access, enchantmentLevelBreak$createInputSlotDefinitions());
     }
 
     @Unique
