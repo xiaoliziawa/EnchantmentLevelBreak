@@ -2,9 +2,6 @@ package net.prizowo.enchantmentlevelbreak.mixin;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.DataSlot;
@@ -18,7 +15,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AnvilMenu.class)
 public abstract class AnvilMenuMixin extends ItemCombinerMenu {
@@ -52,17 +48,20 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
                     int totalCost = 0;
                     for (var entry : rightEnchants.entrySet()) {
                         Holder<Enchantment> enchantment = entry.getKey();
-                        int level = entry.getValue();
-                        int currentLevel = mutable.getLevel(enchantment);
-                        mutable.set(enchantment, Math.max(level, currentLevel));
-                        totalCost += Math.max(level, currentLevel);
+                        int rightLevel = entry.getValue();
+                        int leftLevel = mutable.getLevel(enchantment);
+                        
+                        int newLevel = leftLevel + rightLevel;
+                        mutable.set(enchantment, newLevel);
+                        
+                        totalCost += newLevel;
                     }
                     
                     ItemStack result = left.copy();
                     result.set(DataComponents.ENCHANTMENTS, mutable.toImmutable());
                     this.resultSlots.setItem(0, result);
                     
-                    this.repairItemCountCost = Math.min(totalCost, 40);
+                    this.repairItemCountCost = Math.min(totalCost, 50);
                     this.cost.set(this.repairItemCountCost);
                     ci.cancel();
                 }
@@ -70,23 +69,5 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
         } finally {
             IS_PROCESSING.set(false);
         }
-    }
-
-    @Inject(method = "mayPickup", at = @At("HEAD"), cancellable = true)
-    protected void onMayPickup(Player player, boolean hasStack, CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(player.experienceLevel >= this.cost.get() || player.getAbilities().instabuild);
-    }
-
-    @Inject(method = "onTake", at = @At("HEAD"), cancellable = true)
-    protected void onTake(Player player, ItemStack stack, CallbackInfo ci) {
-        if (!player.getAbilities().instabuild) {
-            player.giveExperienceLevels(-this.cost.get());
-        }
-
-        this.access.execute((level, pos) -> level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 1.0F, 1.0F));
-
-        this.inputSlots.setItem(0, ItemStack.EMPTY);
-        this.inputSlots.setItem(1, ItemStack.EMPTY);
-        ci.cancel();
     }
 } 
