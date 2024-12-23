@@ -12,22 +12,22 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(EnchantmentHelper.class)
+@Mixin({EnchantmentHelper.class})
 public class EnchantmentHelperMixin {
-    @Inject(method = "getItemEnchantmentLevel", at = @At("RETURN"), cancellable = true)
+    @Inject(method = {"getItemEnchantmentLevel"}, at = {@At("RETURN")}, cancellable = true)
     private static void onGetItemEnchantmentLevel(Holder<Enchantment> enchantment, ItemStack stack, CallbackInfoReturnable<Integer> cir) {
-        if (cir.getReturnValue() > 0) {
-            ItemEnchantments enchantments = stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        if (((Integer)cir.getReturnValue()).intValue() > 0) {
+            ItemEnchantments enchantments = (ItemEnchantments)stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
             int actualLevel = enchantments.getLevel(enchantment);
-            cir.setReturnValue(actualLevel);
+            cir.setReturnValue(Integer.valueOf(actualLevel));
         }
     }
 
-    @Inject(method = "getEnchantmentCost", at = @At("RETURN"), cancellable = true)
+    @Inject(method = {"getEnchantmentCost"}, at = {@At("RETURN")}, cancellable = true)
     private static void onGetEnchantmentCost(RandomSource random, int enchantNum, int power, ItemStack stack, CallbackInfoReturnable<Integer> cir) {
         if (power > 0) {
             int cost = power * 2;
-            cir.setReturnValue(Math.min(cost, 50000));
+            cir.setReturnValue(Integer.valueOf(Math.min(cost, 50000)));
         }
     }
 }

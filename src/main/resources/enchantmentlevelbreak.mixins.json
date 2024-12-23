@@ -7,11 +7,14 @@
   "mixins": [
     "AnvilMenuMixin",
     "Command",
+    "EnchantingTableBlockMixin",
     "EnchantmentDisplayMixin",
+    "EnchantmentHelperEnchantMixin",
     "EnchantmentHelperMixin",
+    "EnchantmentMenuMixin",
     "Helper",
-    "ItemEnchantmentsMixin",
     "ItemEnchantmentsConstructorMixin",
+    "ItemEnchantmentsMixin",
     "ItemStackMixin"
   ],
   "client": [],
