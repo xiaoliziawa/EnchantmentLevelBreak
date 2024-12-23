@@ -35,12 +35,12 @@ public class EnchantmentHelperEnchantMixin {
         for (Holder<Enchantment> holder : (Iterable<Holder<Enchantment>>)possibleEnchantments::iterator) {
             if (stack.isPrimaryItemFor(holder)) {
                 if (!hasMainEnchant) {
-                    int i = Math.max(1, level / 5);
+                    int i = Math.max(1, level / 8);
                     list.add(new EnchantmentInstance(holder, i));
                     hasMainEnchant = true;
                     continue;
                 }
-                int displayLevel = Math.max(1, level / 5);
+                int displayLevel = Math.max(1, level / 8);
                 int minLevel = Math.max(1, displayLevel - 2);
                 int maxLevel = displayLevel;
                 int enchantLevel = random.nextInt(minLevel, maxLevel + 1);
@@ -52,6 +52,6 @@ public class EnchantmentHelperEnchantMixin {
 
     @Inject(method = {"selectEnchantment"}, at = {@At("HEAD")})
     private static void onSelectEnchantment(RandomSource random, ItemStack stack, int level, Stream<Holder<Enchantment>> possibleEnchantments, CallbackInfoReturnable<List<EnchantmentInstance>> cir) {
-        level = Math.min(level * 3, 2147483647);
+        level = Math.min((int)(level * 1.5), 2147483647);
     }
 }
