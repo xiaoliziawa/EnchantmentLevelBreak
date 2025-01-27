@@ -9,6 +9,7 @@ import net.minecraft.world.inventory.ItemCombinerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.prizowo.enchantmentlevelbreak.config.Config;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -41,7 +42,33 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
             
             if (!left.isEmpty() && !right.isEmpty()) {
                 ItemEnchantments rightEnchants = right.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
-                if (!rightEnchants.isEmpty()) {
+                if (!rightEnchants.isEmpty() && (Config.allowAnyEnchantment || canEnchant(left, rightEnchants))) {
+                    if (!Config.allowLevelStacking) {
+                        if (Config.allowAnyEnchantment) {
+                            ItemEnchantments leftEnchants = left.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+                            ItemEnchantments.Mutable mutable = new ItemEnchantments.Mutable(leftEnchants);
+                            
+                            int totalCost = 0;
+                            for (var entry : rightEnchants.entrySet()) {
+                                Holder<Enchantment> enchantment = entry.getKey();
+                                int rightLevel = entry.getValue();
+                                int leftLevel = mutable.getLevel(enchantment);
+                                
+                                mutable.set(enchantment, Math.max(leftLevel, rightLevel));
+                                totalCost += Math.max(leftLevel, rightLevel);
+                            }
+                            
+                            ItemStack result = left.copy();
+                            result.set(DataComponents.ENCHANTMENTS, mutable.toImmutable());
+                            this.resultSlots.setItem(0, result);
+                            
+                            this.repairItemCountCost = Math.min(totalCost, 50);
+                            this.cost.set(this.repairItemCountCost);
+                            ci.cancel();
+                        }
+                        return;
+                    }
+
                     ItemEnchantments leftEnchants = left.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
                     ItemEnchantments.Mutable mutable = new ItemEnchantments.Mutable(leftEnchants);
                     
@@ -53,7 +80,6 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
                         
                         int newLevel = leftLevel + rightLevel;
                         mutable.set(enchantment, newLevel);
-                        
                         totalCost += newLevel;
                     }
                     
@@ -69,5 +95,15 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
         } finally {
             IS_PROCESSING.set(false);
         }
+    }
+
+    @Unique
+    private boolean canEnchant(ItemStack item, ItemEnchantments enchantments) {
+        for (var entry : enchantments.entrySet()) {
+            if (!entry.getKey().value().canEnchant(item)) {
+                return false;
+            }
+        }
+        return true;
     }
 } 
