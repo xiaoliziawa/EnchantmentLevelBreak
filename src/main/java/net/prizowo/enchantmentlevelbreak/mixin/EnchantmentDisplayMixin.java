@@ -7,6 +7,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.prizowo.enchantmentlevelbreak.config.Config;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -28,6 +29,7 @@ public class EnchantmentDisplayMixin {
         cir.setReturnValue(name);
     }
 
+    @Unique
     private static String enchantmentLevelBreak$intToRoman(int num) {
         if (num <= 0) return "0";
 
