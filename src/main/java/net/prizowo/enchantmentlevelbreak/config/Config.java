@@ -22,16 +22,22 @@ public class Config {
             .comment("Allow unlimited enchantment level stacking in anvil (e.g. 4+4=8 instead of vanilla's 4+4=5)")
             .define("allowLevelStacking", false);
 
+    private static final ModConfigSpec.IntValue MAX_ENCHANTMENT_LEVEL_VALUE = BUILDER
+            .comment("Maximum enchantment level allowed (range: 255 to " + Integer.MAX_VALUE + ")")
+            .defineInRange("maxEnchantmentLevel", Integer.MAX_VALUE, 255, Integer.MAX_VALUE);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean useRomanNumerals;
     public static boolean allowAnyEnchantment;
     public static boolean allowLevelStacking;
+    public static int maxEnchantmentLevel;
 
     @SubscribeEvent
     static void onLoad(ModConfigEvent event) {
         useRomanNumerals = USE_ROMAN_NUMERALS_VALUE.get();
         allowAnyEnchantment = ALLOW_ANY_ENCHANTMENT_VALUE.get();
         allowLevelStacking = ALLOW_LEVEL_STACKING_VALUE.get();
+        maxEnchantmentLevel = MAX_ENCHANTMENT_LEVEL_VALUE.get();
     }
 }

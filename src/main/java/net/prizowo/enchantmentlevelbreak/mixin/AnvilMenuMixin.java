@@ -39,7 +39,7 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
             IS_PROCESSING.set(true);
             ItemStack left = this.inputSlots.getItem(0);
             ItemStack right = this.inputSlots.getItem(1);
-            
+
             if (!left.isEmpty() && !right.isEmpty()) {
                 handleAnvilOperation(left, right, ci);
             }
@@ -84,8 +84,8 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
     }
 
     @Unique
-    private void handleEnchantmentMerge(ItemStack target, ItemEnchantments leftEnchants, ItemEnchantments rightEnchants, 
-                                      boolean isLeftNormal, boolean isRightNormal, CallbackInfo ci) {
+    private void handleEnchantmentMerge(ItemStack target, ItemEnchantments leftEnchants, ItemEnchantments rightEnchants,
+                                        boolean isLeftNormal, boolean isRightNormal, CallbackInfo ci) {
         ItemEnchantments.Mutable mutable = new ItemEnchantments.Mutable(leftEnchants);
         int totalCost = 0;
 
@@ -93,7 +93,7 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
             Holder<Enchantment> enchantment = entry.getKey();
             int rightLevel = entry.getValue();
             int leftLevel = mutable.getLevel(enchantment);
-            
+
             int newLevel = calculateNewLevel(leftLevel, rightLevel);
             mutable.set(enchantment, newLevel);
             totalCost += newLevel;
