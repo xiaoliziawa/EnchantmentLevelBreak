@@ -11,13 +11,19 @@
     "EnchantmentDisplayMixin",
     "EnchantmentHelperEnchantMixin",
     "EnchantmentHelperMixin",
+    "EnchantmentMenuAccessor",
+    "EnchantmentMenuClickMixin",
+    "EnchantmentMenuListMixin",
     "EnchantmentMenuMixin",
     "Helper",
+    "IItemStackExtensionMixin",
     "ItemEnchantmentsConstructorMixin",
     "ItemEnchantmentsMixin",
     "ItemStackMixin"
   ],
-  "client": [],
+  "client": [
+    "EnchantmentTableTooltipMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

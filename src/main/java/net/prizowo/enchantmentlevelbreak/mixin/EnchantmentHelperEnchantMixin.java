@@ -30,23 +30,16 @@ public class EnchantmentHelperEnchantMixin {
     private static void onGetAvailableEnchantmentResults(int level, ItemStack stack, Stream<Holder<Enchantment>> possibleEnchantments, CallbackInfoReturnable<List<EnchantmentInstance>> cir) {
         List<EnchantmentInstance> list = new ArrayList<>();
         RandomSource random = RandomSource.create();
-        boolean hasMainEnchant = false;
         Objects.requireNonNull(possibleEnchantments);
+        
         for (Holder<Enchantment> holder : (Iterable<Holder<Enchantment>>)possibleEnchantments::iterator) {
-            if (stack.isPrimaryItemFor(holder)) {
-                if (!hasMainEnchant) {
-                    int i = Math.max(1, level / 8);
-                    list.add(new EnchantmentInstance(holder, i));
-                    hasMainEnchant = true;
-                    continue;
-                }
-                int displayLevel = Math.max(1, level / 8);
-                int minLevel = Math.max(1, displayLevel - 2);
-                int maxLevel = displayLevel;
-                int enchantLevel = random.nextInt(minLevel, maxLevel + 1);
-                list.add(new EnchantmentInstance(holder, enchantLevel));
-            }
+            int displayLevel = Math.max(1, level / 8);
+            int minLevel = Math.max(1, displayLevel - 2);
+            int maxLevel = displayLevel;
+            int enchantLevel = random.nextInt(minLevel, maxLevel + 1);
+            list.add(new EnchantmentInstance(holder, enchantLevel));
         }
+        
         cir.setReturnValue(list);
     }
 

@@ -25,6 +25,7 @@ public class EnchantmentDisplayMixin {
             }
             name.append(" ").append(Component.literal(levelText).withStyle(ChatFormatting.GRAY));
         }
+        name.withStyle(ChatFormatting.GRAY);
         cir.setReturnValue(name);
     }
 
