@@ -14,7 +14,8 @@
     "ItemEnchantmentsConstructorMixin",
     "ItemStackMixin"
   ],
-  "client": [],
+  "client": [
+  ],
   "injectors": {
     "defaultRequire": 1
   }
