@@ -21,83 +21,97 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AnvilMenu.class)
 public abstract class AnvilMenuMixin extends ItemCombinerMenu {
-    @Shadow public int repairItemCountCost;
-    @Shadow private final DataSlot cost = DataSlot.standalone();
+    @Shadow
+    public int repairItemCountCost;
+    @Shadow
+    private final DataSlot cost = DataSlot.standalone();
 
     protected AnvilMenuMixin(int containerId, ContainerLevelAccess access) {
         super(null, containerId, null, access, null);
     }
 
-    @Unique
-    private static final ThreadLocal<Boolean> IS_PROCESSING = ThreadLocal.withInitial(() -> false);
-
     @Inject(method = "createResult", at = @At("HEAD"), cancellable = true)
     private void onCreateResult(CallbackInfo ci) {
-        if (IS_PROCESSING.get()) return;
+        ItemStack left = this.inputSlots.getItem(0);
+        ItemStack right = this.inputSlots.getItem(1);
 
-        try {
-            IS_PROCESSING.set(true);
-            ItemStack left = this.inputSlots.getItem(0);
-            ItemStack right = this.inputSlots.getItem(1);
+        if (!left.isEmpty() && !right.isEmpty()) {
+            handleAnvilOperation(left, right, ci);
+        }
+    }
 
-            if (!left.isEmpty() && !right.isEmpty()) {
-                boolean isRightEnchantedBook = right.is(Items.ENCHANTED_BOOK);
+    @Unique
+    private void handleAnvilOperation(ItemStack left, ItemStack right, CallbackInfo ci) {
+        boolean sameItem = left.is(right.getItem());
+        boolean rightIsBook = right.is(Items.ENCHANTED_BOOK);
 
-                ItemEnchantments leftEnchants = left.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
-                ItemEnchantments rightEnchants = right.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
-                ItemEnchantments leftStoredEnchants = left.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY);
-                ItemEnchantments rightStoredEnchants = right.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY);
+        ItemEnchantments leftEnchants = left.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        ItemEnchantments rightEnchants = right.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        ItemEnchantments leftStoredEnchants = left.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY);
+        ItemEnchantments rightStoredEnchants = right.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY);
 
-                ItemEnchantments effectiveLeftEnchants = !leftStoredEnchants.isEmpty() ? leftStoredEnchants : leftEnchants;
-                ItemEnchantments effectiveRightEnchants = !rightStoredEnchants.isEmpty() ? rightStoredEnchants : rightEnchants;
+        ItemEnchantments effectiveLeft = !leftStoredEnchants.isEmpty() ? leftStoredEnchants : leftEnchants;
+        ItemEnchantments effectiveRight = !rightStoredEnchants.isEmpty() ? rightStoredEnchants : rightEnchants;
 
-                if (!effectiveRightEnchants.isEmpty()) {
-                    ItemStack result = left.copy();
-                    ItemEnchantments.Mutable mutable = new ItemEnchantments.Mutable(effectiveLeftEnchants);
-
-                    boolean anyEnchantmentApplied = false;
-                    int totalCost = 0;
-
-                    for (Object2IntMap.Entry<Holder<Enchantment>> entry : effectiveRightEnchants.entrySet()) {
-                        Holder<Enchantment> enchantment = entry.getKey();
-                        int rightLevel = entry.getIntValue();
-                        boolean canApply = Config.allowAnyEnchantment || !isRightEnchantedBook || enchantment.value().canEnchant(left);
-                        if (canApply) {
-                            int leftLevel = mutable.getLevel(enchantment);
-                            int newLevel;
-                            if (Config.allowLevelStacking) {
-                                newLevel = leftLevel + rightLevel;
-                            } else {
-                                newLevel = Math.max(leftLevel, rightLevel);
-                                if (leftLevel == rightLevel) {
-                                    newLevel = Math.min(newLevel + 1, Config.maxEnchantmentLevel);
-                                }
-                            }
-                            newLevel = Math.min(newLevel, Config.maxEnchantmentLevel);
-                            mutable.set(enchantment, newLevel);
-                            totalCost += newLevel;
-                            anyEnchantmentApplied = true;
-                        }
-                    }
-
-                    if (anyEnchantmentApplied) {
-                        if (result.is(Items.ENCHANTED_BOOK)) {
-                            result.set(DataComponents.STORED_ENCHANTMENTS, mutable.toImmutable());
-                            if (result.has(DataComponents.ENCHANTMENTS)) {
-                                result.remove(DataComponents.ENCHANTMENTS);
-                            }
-                        } else {
-                            result.set(DataComponents.ENCHANTMENTS, mutable.toImmutable());
-                        }
-                        this.resultSlots.setItem(0, result);
-                        this.repairItemCountCost = Math.min(totalCost, 50);
-                        this.cost.set(this.repairItemCountCost);
-                        ci.cancel();
-                    }
-                }
+        if (sameItem) {
+            if (!effectiveLeft.isEmpty() || !effectiveRight.isEmpty()) {
+                handleEnchantmentMerge(left, effectiveLeft, effectiveRight, true, ci);
             }
-        } finally {
-            IS_PROCESSING.set(false);
+            return;
+        }
+        if (!effectiveRight.isEmpty() && (rightIsBook || !rightEnchants.isEmpty())) {
+            handleEnchantmentMerge(left, effectiveLeft, effectiveRight, false, ci);
+        }
+    }
+
+    @Unique
+    private void handleEnchantmentMerge(ItemStack target, ItemEnchantments leftEnchants, ItemEnchantments rightEnchants, boolean isSameItemMerge, CallbackInfo ci) {
+        ItemStack result = target.copy();
+        ItemEnchantments.Mutable mutable = new ItemEnchantments.Mutable(leftEnchants);
+        boolean anyApplied = false;
+        int totalCost = 0;
+
+        for (Object2IntMap.Entry<Holder<Enchantment>> entry : rightEnchants.entrySet()) {
+            Holder<Enchantment> enchantment = entry.getKey();
+            int rightLevel = entry.getIntValue();
+            boolean canApply = isSameItemMerge || Config.allowAnyEnchantment || enchantment.value().canEnchant(target);
+            if (canApply) {
+                int leftLevel = mutable.getLevel(enchantment);
+                int newLevel = calculateNewLevel(leftLevel, rightLevel);
+                newLevel = Math.min(newLevel, Config.maxEnchantmentLevel);
+                mutable.set(enchantment, newLevel);
+                totalCost += newLevel;
+                anyApplied = true;
+            }
+        }
+
+        if (anyApplied) {
+            if (result.is(Items.ENCHANTED_BOOK)) {
+                result.set(DataComponents.STORED_ENCHANTMENTS, mutable.toImmutable());
+                if (result.has(DataComponents.ENCHANTMENTS)) result.remove(DataComponents.ENCHANTMENTS);
+            } else {
+                result.set(DataComponents.ENCHANTMENTS, mutable.toImmutable());
+            }
+            this.resultSlots.setItem(0, result);
+            this.repairItemCountCost = Math.min(totalCost, 50);
+            this.cost.set(this.repairItemCountCost);
+            ci.cancel();
+        }
+    }
+
+    @Unique
+    private int calculateNewLevel(int leftLevel, int rightLevel) {
+        // 死妈东西，我和你爆了😡
+        // 优先级: allowLevelStacking > allowVanillaLevelStacking
+        if (Config.allowLevelStacking) {
+            // allowLevelStacking为true时，直接相加 (5+5=10)
+            return leftLevel + rightLevel;
+        } else if (Config.allowVanillaLevelStacking && leftLevel == rightLevel) {
+            // allowVanillaLevelStacking为true且相同等级时，+1 (5+5=6)
+            return leftLevel + 1;
+        } else {
+            // 两个都为false时，使用原版机制，取最大值 (5+5=5)
+            return Math.max(leftLevel, rightLevel);
         }
     }
 } 
