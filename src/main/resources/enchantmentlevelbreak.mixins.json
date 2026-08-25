@@ -8,8 +8,7 @@
     "AnvilMenuMixin",
     "Command",
     "EnchantmentDisplayMixin",
-    "EnchantmentHelperMixin",
-    "Helper",
+    "ItemCombinerMenuAccessor",
     "ItemEnchantmentsMixin",
     "ItemEnchantmentsConstructorMixin",
     "ItemStackMixin"
